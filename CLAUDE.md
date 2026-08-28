@@ -74,8 +74,29 @@ npm run test
   `${{Postgres.DATABASE_URL}}`, `ATTACHMENTS_DIR=/data/uploads`) via
   `railway variable set --service kassenbuch-web`. `ANTHROPIC_API_KEY`
   und `RAILWAY_API_TOKEN` sind optional (siehe README).
-- Migrationen prod: `railway run --service kassenbuch-web -- npm run prisma:migrate:deploy`;
-  Seed: `railway run --service kassenbuch-web -- npx tsx prisma/seed.ts`.
+- **Migrationen/Seed gegen Prod:** `railway run` injiziert nur Env-Vars lokal,
+  proxied aber KEIN Netzwerk — `postgres.railway.internal` ist von außerhalb
+  Railways nicht erreichbar. Stattdessen einen Tunnel aufmachen:
+  `railway ssh keys add` (einmalig, liest den Key automatisch aus dem
+  SSH-Agent — ein Pfad über `--key <path>` scheitert, auch wenn die Datei
+  existiert), dann `railway connect Postgres --tunnel-only --port 15432`
+  im Hintergrund, danach `DATABASE_URL="postgresql://...@127.0.0.1:15432/railway"
+  npx prisma migrate deploy` (bzw. `npx tsx prisma/seed.ts`) gegen den Tunnel.
+- **Railway-API-Tokens für den Kosten-Cron:** Account-Tokens
+  (`apiTokenCreate`-Mutation oder railway.app -> Account Settings -> Tokens)
+  können das GraphQL-Feld `me` nicht auflösen ("Not Authorized") - das geht
+  nur mit einer interaktiven User-Session. `lib/railway.ts` nutzt deshalb
+  `workspace(workspaceId: $workspaceId)`, wozu zusätzlich
+  `RAILWAY_WORKSPACE_ID` (aus `railway status --json` -> `workspaceId`)
+  gesetzt sein muss.
+- **Anthropic-Keys für die Auto-Kategorisierung:** ein Key vom Typ
+  "Persönlich"/"Alle Arbeitsbereiche" ist identity-linked und verlangt einen
+  `anthropic-workspace-id`-Header (`ANTHROPIC_WORKSPACE_ID`) - die
+  Workspace-ID ist in der Console aber nirgends als Klartext sichtbar
+  (auch nicht per Hover/Klick aufs ⓘ). Deutlich einfacher: beim
+  Key-Erstellen den Arbeitsbereich auf einen konkreten Workspace (z. B.
+  "Default") statt "Alle Arbeitsbereiche" einschränken - dann ist der Key
+  an genau einen Workspace gebunden und `ANTHROPIC_WORKSPACE_ID` entfällt.
 - Tägliche Railway-Kosten-Cron: `.github/workflows/cron-railway-costs.yml`
   (GH-Secrets `KASSENBUCH_APP_URL`, `CRON_SECRET`).
 
