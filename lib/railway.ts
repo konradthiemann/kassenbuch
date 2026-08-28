@@ -10,49 +10,54 @@ export type RailwayInvoice = {
 
 const RAILWAY_GRAPHQL_ENDPOINT = "https://backboard.railway.app/graphql/v2";
 
-const INVOICES_QUERY = `query { me { workspaces { customer { invoices { invoiceId total status periodStart periodEnd } } } } }`;
+// Account-scoped API tokens (apiTokenCreate) can't resolve `me` — that needs
+// an interactive user session. `workspace(workspaceId: ...)` works for both,
+// so the workspace ID is required (RAILWAY_WORKSPACE_ID).
+const INVOICES_QUERY = `query($workspaceId: String!) { workspace(workspaceId: $workspaceId) { customer { invoices { invoiceId total status periodStart periodEnd } } } }`;
+
+const graphqlErrorSchema = z.object({
+  errors: z.array(z.object({ message: z.string() })).min(1)
+});
 
 const invoicesResponseSchema = z.object({
   data: z.object({
-    me: z.object({
-      workspaces: z.array(
-        z.object({
-          customer: z.object({
-            invoices: z.array(
-              z.object({
-                invoiceId: z.string(),
-                total: z.number().int(),
-                status: z.string(),
-                periodStart: z.string(),
-                periodEnd: z.string()
-              })
-            )
+    workspace: z.object({
+      customer: z.object({
+        invoices: z.array(
+          z.object({
+            invoiceId: z.string(),
+            total: z.number().int(),
+            status: z.string(),
+            periodStart: z.string(),
+            periodEnd: z.string()
           })
-        })
-      )
+        )
+      })
     })
   })
 });
 
-/** Flattens invoices across every workspace the token's owner belongs to. */
 export function parseRailwayInvoicesResponse(json: unknown): RailwayInvoice[] {
+  const errorResult = graphqlErrorSchema.safeParse(json);
+  if (errorResult.success) {
+    throw new Error(`Railway API error: ${errorResult.data.errors.map((e) => e.message).join(", ")}`);
+  }
+
   const parsed = invoicesResponseSchema.parse(json);
-  return parsed.data.me.workspaces.flatMap((workspace) =>
-    workspace.customer.invoices.map((invoice) => ({
-      invoiceId: invoice.invoiceId,
-      totalCents: invoice.total,
-      status: invoice.status,
-      periodStart: invoice.periodStart,
-      periodEnd: invoice.periodEnd
-    }))
-  );
+  return parsed.data.workspace.customer.invoices.map((invoice) => ({
+    invoiceId: invoice.invoiceId,
+    totalCents: invoice.total,
+    status: invoice.status,
+    periodStart: invoice.periodStart,
+    periodEnd: invoice.periodEnd
+  }));
 }
 
-export async function fetchRailwayInvoices(apiToken: string): Promise<RailwayInvoice[]> {
+export async function fetchRailwayInvoices(apiToken: string, workspaceId: string): Promise<RailwayInvoice[]> {
   const res = await fetch(RAILWAY_GRAPHQL_ENDPOINT, {
     method: "POST",
     headers: { "content-type": "application/json", authorization: `Bearer ${apiToken}` },
-    body: JSON.stringify({ query: INVOICES_QUERY })
+    body: JSON.stringify({ query: INVOICES_QUERY, variables: { workspaceId } })
   });
 
   if (!res.ok) {

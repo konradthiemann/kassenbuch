@@ -19,11 +19,12 @@ export async function GET(req: Request) {
   }
 
   const apiToken = process.env.RAILWAY_API_TOKEN;
-  if (!apiToken) {
-    return NextResponse.json({ skipped: true, reason: "RAILWAY_API_TOKEN not set" });
+  const workspaceId = process.env.RAILWAY_WORKSPACE_ID;
+  if (!apiToken || !workspaceId) {
+    return NextResponse.json({ skipped: true, reason: "RAILWAY_API_TOKEN or RAILWAY_WORKSPACE_ID not set" });
   }
 
-  const invoices = await fetchRailwayInvoices(apiToken);
+  const invoices = await fetchRailwayInvoices(apiToken, workspaceId);
   const paidInvoices = invoices.filter((invoice) => invoice.status === "paid");
 
   const results = [];
