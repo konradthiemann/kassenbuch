@@ -1,6 +1,12 @@
 import { describe, expect, it } from "vitest";
 
-import { createSessionToken, isValidLoginToken, isValidSessionToken } from "./auth";
+import {
+  createSessionToken,
+  isAuthorizedSession,
+  isValidLoginToken,
+  isValidSessionToken,
+  SESSION_COOKIE_NAME
+} from "./auth";
 
 describe("session tokens", () => {
   it("accepts a freshly issued token", () => {
@@ -28,6 +34,32 @@ describe("session tokens", () => {
 
   it("rejects a malformed token", () => {
     expect(isValidSessionToken("not-a-real-token")).toBe(false);
+  });
+});
+
+describe("isAuthorizedSession", () => {
+  function requestWithCookie(cookie: string | null): Request {
+    const headers = new Headers();
+    if (cookie) headers.set("cookie", cookie);
+    return new Request("http://localhost/api/transactions", { headers });
+  }
+
+  it("accepts a request carrying a valid session cookie", () => {
+    const token = createSessionToken();
+    expect(isAuthorizedSession(requestWithCookie(`${SESSION_COOKIE_NAME}=${token}`))).toBe(true);
+  });
+
+  it("accepts the session cookie alongside unrelated cookies", () => {
+    const token = createSessionToken();
+    expect(isAuthorizedSession(requestWithCookie(`foo=bar; ${SESSION_COOKIE_NAME}=${token}; baz=qux`))).toBe(true);
+  });
+
+  it("rejects a missing cookie header", () => {
+    expect(isAuthorizedSession(requestWithCookie(null))).toBe(false);
+  });
+
+  it("rejects an invalid session cookie", () => {
+    expect(isAuthorizedSession(requestWithCookie(`${SESSION_COOKIE_NAME}=garbage`))).toBe(false);
   });
 });
 

@@ -40,6 +40,25 @@ export function isValidSessionToken(token: string | undefined | null, now: numbe
   return now - issuedAt < SESSION_TTL_MS;
 }
 
+function getSessionCookie(req: Request): string | null {
+  const cookieHeader = req.headers.get("cookie");
+  if (!cookieHeader) return null;
+
+  const prefix = `${SESSION_COOKIE_NAME}=`;
+  const match = cookieHeader
+    .split(";")
+    .map((part) => part.trim())
+    .find((part) => part.startsWith(prefix));
+  if (!match) return null;
+
+  return decodeURIComponent(match.slice(prefix.length));
+}
+
+/** Guards session-authenticated app routes (transactions, categories, attachments, ...). */
+export function isAuthorizedSession(req: Request): boolean {
+  return isValidSessionToken(getSessionCookie(req));
+}
+
 /** Compares against the LOGIN_TOKEN env var used on the solo login page. */
 export function isValidLoginToken(candidate: string): boolean {
   const expected = process.env.LOGIN_TOKEN;
