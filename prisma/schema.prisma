@@ -1,0 +1,11 @@
+// Datenmodell folgt im Plan-Schritt (siehe specs/kassenbuch-mvp.md) —
+// bewusst noch ohne Models, damit `prisma generate`/CI ab Tag 1 laufen.
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
