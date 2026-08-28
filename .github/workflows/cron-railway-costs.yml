@@ -1,0 +1,20 @@
+name: Cron - Railway Costs
+
+on:
+  schedule:
+    - cron: "17 4 * * *" # taeglich 04:17 UTC
+  workflow_dispatch:
+
+jobs:
+  trigger:
+    name: Trigger railway-costs cron endpoint
+    runs-on: ubuntu-latest
+    steps:
+      - name: Call /api/cron/railway-costs
+        run: |
+          if [ -z "${{ secrets.KASSENBUCH_APP_URL }}" ] || [ -z "${{ secrets.CRON_SECRET }}" ]; then
+            echo "KASSENBUCH_APP_URL or CRON_SECRET secret not set - skipping."
+            exit 0
+          fi
+          curl -sf -X GET "${{ secrets.KASSENBUCH_APP_URL }}/api/cron/railway-costs" \
+            -H "Authorization: Bearer ${{ secrets.CRON_SECRET }}"
