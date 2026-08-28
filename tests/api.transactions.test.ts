@@ -4,7 +4,7 @@ import { GET, POST } from "../app/api/transactions/route";
 import { createSessionToken, SESSION_COOKIE_NAME } from "../lib/auth";
 import { prisma } from "../lib/prisma";
 
-const authHeaders = { cookie: `${SESSION_COOKIE_NAME}=${createSessionToken()}` };
+const authHeaders = { cookie: `${SESSION_COOKIE_NAME}=${await createSessionToken()}` };
 
 function getRequest(query = ""): Request {
   return new Request(`http://localhost/api/transactions${query}`, { headers: authHeaders });

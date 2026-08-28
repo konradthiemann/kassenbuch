@@ -6,7 +6,7 @@ import { prisma } from "../../../../../lib/prisma";
 import { saveAttachmentFile } from "../../../../../lib/storage";
 
 export async function POST(req: Request, { params }: { params: { id: string } }) {
-  if (!isAuthorizedSession(req)) {
+  if (!(await isAuthorizedSession(req))) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 

@@ -9,7 +9,7 @@ import { prisma } from "../../../../lib/prisma";
  * mistakes at the source app instead.
  */
 export async function DELETE(req: Request, { params }: { params: { id: string } }) {
-  if (!isAuthorizedSession(req)) {
+  if (!(await isAuthorizedSession(req))) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 

@@ -5,7 +5,7 @@ import { prisma } from "../../../../lib/prisma";
 import { readAttachmentFile } from "../../../../lib/storage";
 
 export async function GET(req: Request, { params }: { params: { id: string } }) {
-  if (!isAuthorizedSession(req)) {
+  if (!(await isAuthorizedSession(req))) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 
@@ -26,7 +26,7 @@ export async function GET(req: Request, { params }: { params: { id: string } }) 
 
 /** Soft-delete only (GoBD): the file itself stays on disk. */
 export async function DELETE(req: Request, { params }: { params: { id: string } }) {
-  if (!isAuthorizedSession(req)) {
+  if (!(await isAuthorizedSession(req))) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 

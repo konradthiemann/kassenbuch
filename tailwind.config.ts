@@ -6,7 +6,7 @@ import type { Config } from "tailwindcss";
 // nicht des Scaffolds.
 const config: Config = {
   content: ["./app/**/*.{ts,tsx}", "./components/**/*.{ts,tsx}"],
-  darkMode: "class",
+  darkMode: "media",
   theme: {
     extend: {
       colors: {
@@ -59,7 +59,13 @@ const config: Config = {
       },
       borderRadius: {
         card: "0.75rem",
-        field: "0.5rem"
+        field: "0.5rem",
+        full: "9999px"
+      },
+      boxShadow: {
+        card: "0 1px 2px rgb(0 0 0 / 0.04)",
+        raised: "0 4px 16px rgb(0 0 0 / 0.08)",
+        fab: "0 8px 24px rgb(var(--brand) / 0.35)"
       },
       // Z-Leiter: Content < Header < Bottom-Nav/FAB < Dialog < Toast
       zIndex: {

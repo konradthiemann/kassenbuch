@@ -19,7 +19,7 @@ describe("POST /api/auth/login", () => {
 
     const cookie = res.cookies.get(SESSION_COOKIE_NAME);
     expect(cookie).toBeDefined();
-    expect(isValidSessionToken(cookie?.value)).toBe(true);
+    expect(await isValidSessionToken(cookie?.value)).toBe(true);
   });
 
   it("rejects a wrong login token without setting a cookie", async () => {

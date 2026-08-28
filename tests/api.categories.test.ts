@@ -4,8 +4,8 @@ import { GET } from "../app/api/categories/route";
 import { createSessionToken, SESSION_COOKIE_NAME } from "../lib/auth";
 import { DEFAULT_CATEGORIES } from "../lib/categories";
 
-function authedRequest(): Request {
-  const token = createSessionToken();
+async function authedRequest(): Promise<Request> {
+  const token = await createSessionToken();
   return new Request("http://localhost/api/categories", {
     headers: { cookie: `${SESSION_COOKIE_NAME}=${token}` }
   });
@@ -18,7 +18,7 @@ describe("GET /api/categories", () => {
   });
 
   it("returns the seeded default categories", async () => {
-    const res = await GET(authedRequest());
+    const res = await GET(await authedRequest());
     expect(res.status).toBe(200);
 
     const body = (await res.json()) as { name: string; type: string }[];

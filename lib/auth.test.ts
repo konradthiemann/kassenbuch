@@ -9,31 +9,31 @@ import {
 } from "./auth";
 
 describe("session tokens", () => {
-  it("accepts a freshly issued token", () => {
-    const token = createSessionToken();
-    expect(isValidSessionToken(token)).toBe(true);
+  it("accepts a freshly issued token", async () => {
+    const token = await createSessionToken();
+    expect(await isValidSessionToken(token)).toBe(true);
   });
 
-  it("rejects a missing token", () => {
-    expect(isValidSessionToken(null)).toBe(false);
-    expect(isValidSessionToken(undefined)).toBe(false);
-    expect(isValidSessionToken("")).toBe(false);
+  it("rejects a missing token", async () => {
+    expect(await isValidSessionToken(null)).toBe(false);
+    expect(await isValidSessionToken(undefined)).toBe(false);
+    expect(await isValidSessionToken("")).toBe(false);
   });
 
-  it("rejects a tampered signature", () => {
-    const token = createSessionToken();
+  it("rejects a tampered signature", async () => {
+    const token = await createSessionToken();
     const [payload] = token.split(".");
-    expect(isValidSessionToken(`${payload}.deadbeef`)).toBe(false);
+    expect(await isValidSessionToken(`${payload}.deadbeef`)).toBe(false);
   });
 
-  it("rejects an expired token", () => {
+  it("rejects an expired token", async () => {
     const issuedAt = Date.now() - 31 * 24 * 60 * 60 * 1000; // 31 Tage alt
-    const token = createSessionToken(issuedAt);
-    expect(isValidSessionToken(token)).toBe(false);
+    const token = await createSessionToken(issuedAt);
+    expect(await isValidSessionToken(token)).toBe(false);
   });
 
-  it("rejects a malformed token", () => {
-    expect(isValidSessionToken("not-a-real-token")).toBe(false);
+  it("rejects a malformed token", async () => {
+    expect(await isValidSessionToken("not-a-real-token")).toBe(false);
   });
 });
 
@@ -44,22 +44,22 @@ describe("isAuthorizedSession", () => {
     return new Request("http://localhost/api/transactions", { headers });
   }
 
-  it("accepts a request carrying a valid session cookie", () => {
-    const token = createSessionToken();
-    expect(isAuthorizedSession(requestWithCookie(`${SESSION_COOKIE_NAME}=${token}`))).toBe(true);
+  it("accepts a request carrying a valid session cookie", async () => {
+    const token = await createSessionToken();
+    expect(await isAuthorizedSession(requestWithCookie(`${SESSION_COOKIE_NAME}=${token}`))).toBe(true);
   });
 
-  it("accepts the session cookie alongside unrelated cookies", () => {
-    const token = createSessionToken();
-    expect(isAuthorizedSession(requestWithCookie(`foo=bar; ${SESSION_COOKIE_NAME}=${token}; baz=qux`))).toBe(true);
+  it("accepts the session cookie alongside unrelated cookies", async () => {
+    const token = await createSessionToken();
+    expect(await isAuthorizedSession(requestWithCookie(`foo=bar; ${SESSION_COOKIE_NAME}=${token}; baz=qux`))).toBe(true);
   });
 
-  it("rejects a missing cookie header", () => {
-    expect(isAuthorizedSession(requestWithCookie(null))).toBe(false);
+  it("rejects a missing cookie header", async () => {
+    expect(await isAuthorizedSession(requestWithCookie(null))).toBe(false);
   });
 
-  it("rejects an invalid session cookie", () => {
-    expect(isAuthorizedSession(requestWithCookie(`${SESSION_COOKIE_NAME}=garbage`))).toBe(false);
+  it("rejects an invalid session cookie", async () => {
+    expect(await isAuthorizedSession(requestWithCookie(`${SESSION_COOKIE_NAME}=garbage`))).toBe(false);
   });
 });
 

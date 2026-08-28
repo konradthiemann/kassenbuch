@@ -6,3 +6,9 @@ export function currentMonthRange(now: Date = new Date()): DateRange {
   const to = new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth() + 1, 1));
   return { from, to };
 }
+
+export function shiftMonthRange(range: DateRange, deltaMonths: number): DateRange {
+  const from = new Date(Date.UTC(range.from.getUTCFullYear(), range.from.getUTCMonth() + deltaMonths, 1));
+  const to = new Date(Date.UTC(range.from.getUTCFullYear(), range.from.getUTCMonth() + deltaMonths + 1, 1));
+  return { from, to };
+}

@@ -8,7 +8,7 @@ import { createSessionToken, SESSION_COOKIE_NAME } from "../lib/auth";
 import { attachmentFilePath } from "../lib/storage";
 import { prisma } from "../lib/prisma";
 
-const authHeaders = { cookie: `${SESSION_COOKIE_NAME}=${createSessionToken()}` };
+const authHeaders = { cookie: `${SESSION_COOKIE_NAME}=${await createSessionToken()}` };
 
 async function createManualTransaction() {
   return prisma.transaction.create({

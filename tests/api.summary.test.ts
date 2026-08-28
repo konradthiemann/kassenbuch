@@ -4,7 +4,7 @@ import { GET } from "../app/api/summary/route";
 import { createSessionToken, SESSION_COOKIE_NAME } from "../lib/auth";
 import { prisma } from "../lib/prisma";
 
-const authHeaders = { cookie: `${SESSION_COOKIE_NAME}=${createSessionToken()}` };
+const authHeaders = { cookie: `${SESSION_COOKIE_NAME}=${await createSessionToken()}` };
 
 describe("GET /api/summary", () => {
   const createdIds: string[] = [];

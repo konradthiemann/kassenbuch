@@ -1,17 +1,39 @@
-import { formatEuroCents } from "@/lib/money";
+import Dashboard from "../components/Dashboard";
+import { currentMonthRange } from "../lib/period";
+import { prisma } from "../lib/prisma";
+import { summarize } from "../lib/summary";
 
-export default function Home() {
+export const dynamic = "force-dynamic";
+
+export default async function HomePage() {
+  const { from, to } = currentMonthRange();
+
+  const [transactions, categories] = await Promise.all([
+    prisma.transaction.findMany({
+      where: { occurredAt: { gte: from, lt: to } },
+      include: { category: true, attachments: { where: { deletedAt: null } } },
+      orderBy: { occurredAt: "desc" }
+    }),
+    prisma.category.findMany({ orderBy: { name: "asc" } })
+  ]);
+
   return (
-    <main className="mx-auto flex min-h-screen max-w-md flex-col gap-6 px-4 py-10">
-      <header>
-        <h1 className="text-amount-hero font-semibold tabular-nums">Kassenbuch</h1>
-        <p className="mt-1 text-ink-muted">Kleingewerbe-Buchhaltung, automatisiert.</p>
-      </header>
-
-      <section className="rounded-card border border-line bg-surface p-4 shadow-sm">
-        <p className="text-ink-muted text-sm">Kontostand (Platzhalter)</p>
-        <p className="text-amount-hero tabular-nums">{formatEuroCents(0)}</p>
-      </section>
-    </main>
+    <Dashboard
+      initialFrom={from.toISOString()}
+      initialTo={to.toISOString()}
+      initialSummary={summarize(transactions)}
+      initialTransactions={transactions.map((t) => ({
+        id: t.id,
+        type: t.type,
+        amountCents: t.amountCents,
+        occurredAt: t.occurredAt.toISOString(),
+        description: t.description,
+        source: t.source,
+        categorySource: t.categorySource,
+        category: t.category ? { id: t.category.id, name: t.category.name, type: t.category.type } : null,
+        attachments: t.attachments.map((a) => ({ id: a.id, filename: a.filename }))
+      }))}
+      categories={categories.map((c) => ({ id: c.id, name: c.name, type: c.type }))}
+    />
   );
 }
