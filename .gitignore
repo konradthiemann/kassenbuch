@@ -30,5 +30,8 @@ coverage/
 # Prisma
 prisma/dev.db
 
+# Lokal hochgeladene Belege (Railway Volume in Prod, siehe lib/storage.ts)
+/data/
+
 # Claude Code local preview launch config (machine-local, not shared)
 .claude/launch.json
