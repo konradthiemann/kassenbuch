@@ -1,6 +1,3 @@
-// Datenmodell folgt im Plan-Schritt (siehe specs/kassenbuch-mvp.md) —
-// bewusst noch ohne Models, damit `prisma generate`/CI ab Tag 1 laufen.
-
 generator client {
   provider = "prisma-client-js"
 }
@@ -8,4 +5,62 @@ generator client {
 datasource db {
   provider = "postgresql"
   url      = env("DATABASE_URL")
+}
+
+enum TransactionType {
+  INCOME
+  EXPENSE
+}
+
+enum CategorySource {
+  MANUAL
+  CLAUDE
+  UNCATEGORIZED
+}
+
+model Category {
+  id           String           @id @default(cuid())
+  name         String
+  type         TransactionType
+  createdAt    DateTime         @default(now())
+  transactions Transaction[]
+
+  @@unique([name, type])
+}
+
+// externalId is nullable for manual entries; Postgres allows multiple NULLs
+// in a unique index, so only webhook-sourced rows are deduplicated.
+model Transaction {
+  id             String         @id @default(cuid())
+  type           TransactionType
+  amountCents    Int
+  occurredAt     DateTime
+  description    String
+  source         String
+  externalId     String?
+  categoryId     String?
+  category       Category?      @relation(fields: [categoryId], references: [id])
+  categorySource CategorySource @default(UNCATEGORIZED)
+  // Vorgesehen fuer eine spaetere EÜR-Auswertung, ohne aktive Logik in v1.
+  taxRelevant    Boolean        @default(true)
+  attachments    Attachment[]
+  createdAt      DateTime       @default(now())
+  updatedAt      DateTime       @updatedAt
+
+  @@unique([source, externalId])
+  @@index([occurredAt])
+}
+
+// Belege sind GoBD-bedingt unveraenderbar: kein Update-Pfad auf
+// filename/mimeType/storageKey, nur deletedAt als Soft-Delete.
+model Attachment {
+  id            String      @id @default(cuid())
+  transactionId String
+  transaction   Transaction @relation(fields: [transactionId], references: [id])
+  filename      String
+  mimeType      String
+  sizeBytes     Int
+  storageKey    String
+  uploadedAt    DateTime    @default(now())
+  deletedAt     DateTime?
 }

@@ -13,6 +13,13 @@ concurrency:
   group: ci-${{ github.ref }}
   cancel-in-progress: true
 
+env:
+  DATABASE_URL: postgresql://postgres:postgres@localhost:5432/kassenbuch?schema=public
+  AUTH_SECRET: ci-test-secret-not-for-prod-use
+  LOGIN_TOKEN: ci-test-login-token
+  KASSENBUCH_SERVICE_TOKEN: ci-test-service-token
+  CRON_SECRET: ci-test-cron-secret
+
 jobs:
   lint:
     name: Lint
@@ -62,6 +69,7 @@ jobs:
           node-version-file: .nvmrc
           cache: npm
       - run: npm ci
+      - run: npx prisma generate && npx prisma db push
       - run: npm run test
 
   build:
@@ -76,5 +84,3 @@ jobs:
           cache: npm
       - run: npm ci
       - run: npm run build
-        env:
-          DATABASE_URL: postgresql://postgres:postgres@localhost:5432/kassenbuch?schema=public

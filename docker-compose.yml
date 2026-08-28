@@ -1,0 +1,15 @@
+services:
+  postgres:
+    image: postgres:16
+    container_name: kassenbuch-postgres
+    environment:
+      POSTGRES_USER: kassenbuch
+      POSTGRES_PASSWORD: kassenbuch
+      POSTGRES_DB: kassenbuch_local
+    ports:
+      - "5433:5432"
+    volumes:
+      - kassenbuch_pg_data:/var/lib/postgresql/data
+
+volumes:
+  kassenbuch_pg_data:
