@@ -56,6 +56,29 @@ npm run typecheck
 npm run test
 ```
 
+## Deploy (Railway)
+- Projekt `kassenbuch` (Workspace "Konrad Thiemann's Projects"), zwei Services:
+  `kassenbuch-web` (Next.js, an GitHub-Repo `konradthiemann/kassenbuch`
+  Branch `main` gebunden — Railways eigene GitHub-Integration deployt bei
+  jedem Push automatisch, kein GH-Actions-Deploy-Job nötig) und `Postgres`.
+- Volume an `kassenbuch-web` gemounted auf `/data` (Belege, siehe
+  `lib/storage.ts`/`ATTACHMENTS_DIR`).
+- **Wichtig:** `NODE_ENV` **nicht** als Service-Variable setzen — npm
+  überspringt sonst devDependencies beim Install, was `next build`
+  bricht (Tailwind/PostCSS werden dort gebraucht). Deswegen liegen
+  build-relevante Pakete (tailwindcss, postcss, autoprefixer, typescript,
+  eslint/eslint-config-next) bewusst in `dependencies`, nicht
+  `devDependencies`.
+- Service-Variablen (`AUTH_SECRET`, `LOGIN_TOKEN`, `KASSENBUCH_SERVICE_TOKEN`,
+  `CRON_SECRET`, `DATABASE_URL` als Railway-Referenzvariable
+  `${{Postgres.DATABASE_URL}}`, `ATTACHMENTS_DIR=/data/uploads`) via
+  `railway variable set --service kassenbuch-web`. `ANTHROPIC_API_KEY`
+  und `RAILWAY_API_TOKEN` sind optional (siehe README).
+- Migrationen prod: `railway run --service kassenbuch-web -- npm run prisma:migrate:deploy`;
+  Seed: `railway run --service kassenbuch-web -- npx tsx prisma/seed.ts`.
+- Tägliche Railway-Kosten-Cron: `.github/workflows/cron-railway-costs.yml`
+  (GH-Secrets `KASSENBUCH_APP_URL`, `CRON_SECRET`).
+
 ## Analyse-Qualität: Fakten vs. Annahmen
 Vor jeder Empfehlung: alle betroffenen Dateien lesen, Aussagen als Belegt /
 Vermutung / Unbekannt kennzeichnen, Korrekturen offen kommunizieren (siehe
