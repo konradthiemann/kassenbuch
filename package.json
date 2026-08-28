@@ -14,7 +14,8 @@
     "db:migrate:dev": "dotenv -e .env.local -- prisma migrate dev",
     "prisma:generate": "prisma generate",
     "prisma:migrate:deploy": "prisma migrate deploy",
-    "prisma:seed": "dotenv -e .env.local -- tsx prisma/seed.ts"
+    "prisma:seed": "dotenv -e .env.local -- tsx prisma/seed.ts",
+    "postinstall": "prisma generate"
   },
   "dependencies": {
     "@anthropic-ai/sdk": "^0.120.0",
