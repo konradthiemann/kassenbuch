@@ -38,8 +38,23 @@ describe("GET /api/cron/railway-costs", () => {
     if (original) process.env.RAILWAY_API_TOKEN = original;
   });
 
+  it("skips gracefully when RAILWAY_WORKSPACE_ID is unset", async () => {
+    process.env.RAILWAY_API_TOKEN = "fake-token-for-test";
+    const original = process.env.RAILWAY_WORKSPACE_ID;
+    delete process.env.RAILWAY_WORKSPACE_ID;
+
+    const res = await GET(request());
+    expect(res.status).toBe(200);
+    const body = (await res.json()) as { skipped: boolean };
+    expect(body.skipped).toBe(true);
+
+    delete process.env.RAILWAY_API_TOKEN;
+    if (original) process.env.RAILWAY_WORKSPACE_ID = original;
+  });
+
   it("books a paid invoice as an expense and ignores non-paid ones", async () => {
     process.env.RAILWAY_API_TOKEN = "fake-token-for-test";
+    process.env.RAILWAY_WORKSPACE_ID = "fake-workspace-for-test";
 
     vi.stubGlobal(
       "fetch",
@@ -47,29 +62,25 @@ describe("GET /api/cron/railway-costs", () => {
         ok: true,
         json: async () => ({
           data: {
-            me: {
-              workspaces: [
-                {
-                  customer: {
-                    invoices: [
-                      {
-                        invoiceId: "in_test_paid",
-                        total: 919,
-                        status: "paid",
-                        periodStart: "2026-07-14T10:30:03.000Z",
-                        periodEnd: "2026-08-14T10:30:03.000Z"
-                      },
-                      {
-                        invoiceId: "in_test_open",
-                        total: 500,
-                        status: "open",
-                        periodStart: "2026-08-14T10:30:03.000Z",
-                        periodEnd: "2026-09-14T10:30:03.000Z"
-                      }
-                    ]
+            workspace: {
+              customer: {
+                invoices: [
+                  {
+                    invoiceId: "in_test_paid",
+                    total: 919,
+                    status: "paid",
+                    periodStart: "2026-07-14T10:30:03.000Z",
+                    periodEnd: "2026-08-14T10:30:03.000Z"
+                  },
+                  {
+                    invoiceId: "in_test_open",
+                    total: 500,
+                    status: "open",
+                    periodStart: "2026-08-14T10:30:03.000Z",
+                    periodEnd: "2026-09-14T10:30:03.000Z"
                   }
-                }
-              ]
+                ]
+              }
             }
           }
         })
@@ -93,5 +104,6 @@ describe("GET /api/cron/railway-costs", () => {
     expect(notBooked).toBeNull();
 
     delete process.env.RAILWAY_API_TOKEN;
+    delete process.env.RAILWAY_WORKSPACE_ID;
   });
 });
